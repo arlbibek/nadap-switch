@@ -164,7 +164,6 @@ update_adapters(item_name, *) {
 
 build_tray_menu() {
     tray.Delete()
-    tray.Add()
 
     ; Set tooltip
     A_IconTip := A_ScriptName . "`nRight click to switch between network adapters."
@@ -215,6 +214,8 @@ build_tray_menu() {
     tray.Add("Refresh Adapters", (*) => build_tray_menu())
     tray.Add("Reload App", (*) => Reload())
     tray.Add("Exit", (*) => ExitApp())
+    tray.Add()
+    tray.Add("Made with ❤️ by Bibek Aryal.", (*) => Run("https://bibeka.com.np/"))
 }
 
 ; Initialize menu
