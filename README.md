@@ -18,7 +18,7 @@ nadap-switch, short for Network Adapter Switcher, is a lightweight Windows utili
 
 ## Usage
 
-- Download `nadap-switch.exe` from the releases section
+- Download `nadap-switch.exe` from the [releases](https://github.com/arlbibek/nadap-switch/releases/latest)
 - Run the application
 - Right-click the tray icon to view and switch between adapters
 
