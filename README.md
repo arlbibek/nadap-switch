@@ -1,34 +1,36 @@
 # Network Adapter Switcher
 
-nadap-switch, short for Network Adapter Switcher, is a lightweight Windows utility that lets you quickly switch between all available physical network adapters—right from the system tray, with just one click.
+nadap-switch, short for Network Adapter Switcher, is a lightweight Windows utility that lets you quickly enable or disable network adapters through a clean, modern GUI — powered entirely by PowerShell.
 
 ![nadap-switch](https://img.shields.io/badge/nadap--switch-active-brightgreen)
 ![GitHub License](https://img.shields.io/github/license/arlbibek/nadap-switch)
-![GitHub Release](https://img.shields.io/github/v/release/arlbibek/nadap-switch)
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/arlbibek/nadap-switch/total)
-![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/arlbibek/nadap-switch/latest/total)
 
 **Why?**
 
-I work in IT and often need to switch between Wi-Fi and LAN. This usually means disabling or enabling the respective adapter through Control Panel, running PowerShell scripts, or manually disconnecting, this becomes quit infuriating if you have to do it more frequently through out the day.
+I work in IT and often need to switch between Wi-Fi and LAN. This usually means disabling or enabling adapters through Control Panel or running commands manually — which gets tedious fast when you do it multiple times a day.
 
 ## Features
 
-- Instantly switch between all available physical network adapters
-- Option to run at startup for quick access
-- Clean, tray-based interface with simple controls
-
-⚠️ **Note**: When you select a adapter (e.g., Wi-Fi), all other network adapters are automatically disabled. You can re-enable them manually via Command Prompt if needed.
+- View all network adapters organized by **Physical** and **Virtual** categories
+- Enable or disable any adapter with a single checkbox toggle
+- **Enable All** button to quickly restore all adapters
+- Quick access to **Network Settings** (ncpa.cpl)
+- Modern dark-themed interface
+- No dependencies — just PowerShell and Windows
 
 ## Usage
 
-- Download `nadap-switch.exe` from the [releases](https://github.com/arlbibek/nadap-switch/releases/latest)
-- Run the application
-- Right-click the tray icon to view and switch between adapters
+1. Download or clone this repository
+2. Right-click `nadap-switch.ps1` and choose **Run with PowerShell**
+3. The app will request administrator privileges (required to manage adapters)
+4. Use the checkboxes to enable or disable adapters
+
+> [!NOTE]
+> Administrator privileges are required to enable or disable network adapters.
 
 ## Demo
 
-![ndap-switch app demo](demo.gif)
+ndap-switch app demo
 
 ---
 
