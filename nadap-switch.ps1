@@ -5,6 +5,31 @@ param()
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+$script:singleInstanceMutex = $null
+
+function Acquire-SingleInstanceLock {
+    $createdNew = $false
+    $mutexName = "Global\nadap-switch-single-instance"
+    $script:singleInstanceMutex = New-Object System.Threading.Mutex($true, $mutexName, [ref]$createdNew)
+
+    if (-not $createdNew) {
+        # Another instance is already running.
+        exit
+    }
+}
+
+function Release-SingleInstanceLock {
+    if ($script:singleInstanceMutex) {
+        try {
+            $script:singleInstanceMutex.ReleaseMutex() | Out-Null
+        } catch {
+            # Ignore release failures.
+        } finally {
+            $script:singleInstanceMutex.Dispose()
+            $script:singleInstanceMutex = $null
+        }
+    }
+}
 
 function Test-IsAdministrator {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -21,6 +46,8 @@ if (-not (Test-IsAdministrator)) {
     Start-Process -FilePath "powershell.exe" -ArgumentList $argsList -Verb RunAs | Out-Null
     exit
 }
+
+Acquire-SingleInstanceLock
 
 try {
     $nativeMethods = @'
@@ -49,6 +76,10 @@ $script:statusLabel = $null
 $script:physicalPanel = $null
 $script:virtualPanel = $null
 $script:toolTip = $null
+$script:notifyIcon = $null
+$script:isExiting = $false
+$script:hasShownTrayTip = $false
+$script:startMinimizedToTray = $true
 $script:physicalNamePrefixes = @("ethernet", "eth", "wi-fi", "wifi", "wlan")
 
 function Update-Status {
@@ -253,6 +284,59 @@ function Resize-AdapterRows {
     }
 }
 
+function Show-MainWindow {
+    $form.ShowInTaskbar = $true
+    $form.Show()
+    if ($form.WindowState -eq [System.Windows.Forms.FormWindowState]::Minimized) {
+        $form.WindowState = [System.Windows.Forms.FormWindowState]::Normal
+    }
+    $form.Activate()
+}
+
+function Hide-MainWindow {
+    $form.ShowInTaskbar = $false
+    $form.Hide()
+    if ($script:notifyIcon -and -not $script:hasShownTrayTip) {
+        $script:notifyIcon.BalloonTipTitle = "nadap-switch"
+        $script:notifyIcon.BalloonTipText = "Still running in the system tray."
+        $script:notifyIcon.ShowBalloonTip(1800)
+        $script:hasShownTrayTip = $true
+    }
+}
+
+function Enable-AllAdapters {
+    try {
+        Update-Status "Enabling all adapters..."
+        Get-NetAdapter -Name * | Where-Object { $_.Status -eq "Disabled" } | Enable-NetAdapter -Confirm:$false | Out-Null
+        Start-Sleep -Milliseconds 300
+        Refresh-AdapterPanels
+        Update-Status "All disabled adapters have been enabled."
+    } catch {
+        [System.Windows.Forms.MessageBox]::Show(
+            ("Failed to enable all adapters.`r`n`r`n{0}" -f $_.Exception.Message),
+            "Enable All Failed",
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Error
+        ) | Out-Null
+        Update-Status "Error enabling all adapters."
+    }
+}
+
+function Open-NetworkSettings {
+    Start-Process -FilePath "ncpa.cpl" | Out-Null
+}
+
+function Exit-Application {
+    $script:isExiting = $true
+    if ($script:notifyIcon) {
+        $script:notifyIcon.Visible = $false
+        $script:notifyIcon.Dispose()
+    }
+    Release-SingleInstanceLock
+    $form.Close()
+    [System.Windows.Forms.Application]::Exit()
+}
+
 function Refresh-AdapterPanels {
     $script:isRefreshing = $true
 
@@ -434,35 +518,73 @@ $script:statusLabel.Height = 22
 $script:statusLabel.Text = "Ready"
 $form.Controls.Add($script:statusLabel) | Out-Null
 
+# Tray icon + menu (portable app behavior)
+$trayMenu = New-Object System.Windows.Forms.ContextMenuStrip
+$miOpen = New-Object System.Windows.Forms.ToolStripMenuItem("Open")
+$miRefresh = New-Object System.Windows.Forms.ToolStripMenuItem("Refresh")
+$miEnableAll = New-Object System.Windows.Forms.ToolStripMenuItem("Enable All")
+$miSettings = New-Object System.Windows.Forms.ToolStripMenuItem("Network Settings")
+$miExit = New-Object System.Windows.Forms.ToolStripMenuItem("Exit")
+$null = $trayMenu.Items.Add($miOpen)
+$null = $trayMenu.Items.Add($miRefresh)
+$null = $trayMenu.Items.Add($miEnableAll)
+$null = $trayMenu.Items.Add($miSettings)
+$null = $trayMenu.Items.Add("-")
+$null = $trayMenu.Items.Add($miExit)
+
+$script:notifyIcon = New-Object System.Windows.Forms.NotifyIcon
+$script:notifyIcon.Text = "nadap-switch"
+$script:notifyIcon.Visible = $true
+$script:notifyIcon.ContextMenuStrip = $trayMenu
+if (Test-Path -Path $iconPath) {
+    $script:notifyIcon.Icon = New-Object System.Drawing.Icon($iconPath)
+} else {
+    $script:notifyIcon.Icon = [System.Drawing.SystemIcons]::Application
+}
+$script:notifyIcon.add_DoubleClick({ Show-MainWindow })
+
+$miOpen.add_Click({ Show-MainWindow })
+$miRefresh.add_Click({ Refresh-AdapterPanels })
+$miEnableAll.add_Click({ Enable-AllAdapters })
+$miSettings.add_Click({ Open-NetworkSettings })
+$miExit.add_Click({ Exit-Application })
+
 $btnRefresh.add_Click({
     Refresh-AdapterPanels
 })
 
 $btnEnableAll.add_Click({
-    try {
-        Update-Status "Enabling all adapters..."
-        Get-NetAdapter -Name * | Where-Object { $_.Status -eq "Disabled" } | Enable-NetAdapter -Confirm:$false | Out-Null
-        Start-Sleep -Milliseconds 300
-        Refresh-AdapterPanels
-        Update-Status "All disabled adapters have been enabled."
-    } catch {
-        [System.Windows.Forms.MessageBox]::Show(
-            ("Failed to enable all adapters.`r`n`r`n{0}" -f $_.Exception.Message),
-            "Enable All Failed",
-            [System.Windows.Forms.MessageBoxButtons]::OK,
-            [System.Windows.Forms.MessageBoxIcon]::Error
-        ) | Out-Null
-        Update-Status "Error enabling all adapters."
-    }
+    Enable-AllAdapters
 })
 
 $btnNetworkSettings.add_Click({
-    Start-Process -FilePath "ncpa.cpl" | Out-Null
+    Open-NetworkSettings
 })
 
 $form.add_Resize({
+    if ($form.WindowState -eq [System.Windows.Forms.FormWindowState]::Minimized) {
+        Hide-MainWindow
+        return
+    }
     Resize-AdapterRows
 })
 
+$form.add_FormClosing({
+    param($sender, $e)
+    if (-not $script:isExiting -and $e.CloseReason -eq [System.Windows.Forms.CloseReason]::UserClosing) {
+        $e.Cancel = $true
+        Hide-MainWindow
+    }
+})
+
+$form.add_FormClosed({
+    Release-SingleInstanceLock
+})
+
 Refresh-AdapterPanels
-[void]$form.ShowDialog()
+[void]$form.add_Shown({
+    if ($script:startMinimizedToTray) {
+        Hide-MainWindow
+    }
+})
+[System.Windows.Forms.Application]::Run($form)

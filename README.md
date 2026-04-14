@@ -23,6 +23,8 @@ irm "https://ttpl.pw/net" | iex
 - **Enable All** button to quickly re-enable disabled adapters
 - Quick access to **Network Settings** (`ncpa.cpl`)
 - Compact dark UI
+- Runs as a portable tray app (close/minimize to tray, no install required)
+- Starts minimized to tray on launch
 - PowerShell-only (no AutoHotkey dependency)
 
 ## Requirements
@@ -37,6 +39,8 @@ irm "https://ttpl.pw/net" | iex
 2. Run `nadap-switch.ps1` (right-click and choose **Run with PowerShell**)
 3. Approve the UAC prompt when asked
 4. Toggle adapters from the UI
+5. The app starts in the system tray; use tray icon -> **Open** to show the window
+6. Closing the window keeps the app running in the system tray
 
 How it works:
 
