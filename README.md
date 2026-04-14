@@ -25,12 +25,27 @@ I work in IT and often need to switch between Wi-Fi and LAN. This usually means 
 3. The app will request administrator privileges (required to manage adapters)
 4. Use the checkboxes to enable or disable adapters
 
+### One-liner launch (`irm | iex`)
+
+You can also run nadap-switch using a remote bootstrap script:
+
+```powershell
+irm "https://bibeka.com.np/net" | iex
+```
+
+To enable this URL:
+
+1. Host the contents of `bootstrap.ps1` at `https://bibeka.com.np/net` as plain text.
+2. Keep the app source URL in `bootstrap.ps1` pointing to:
+   `https://raw.githubusercontent.com/arlbibek/nadap-switch/refs/heads/master/nadap-switch.ps1`
+3. The bootstrap script downloads the latest `nadap-switch.ps1` to `C:\ProgramData\nadap-switch\` and launches it in hidden PowerShell.
+
 > [!NOTE]
 > Administrator privileges are required to enable or disable network adapters.
 
 ## Demo
 
-ndap-switch app demo
+![ndap-switch app demo](demo.gif)
 
 ---
 
