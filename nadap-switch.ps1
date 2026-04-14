@@ -518,6 +518,55 @@ $script:statusLabel.Height = 22
 $script:statusLabel.Text = "Ready"
 $form.Controls.Add($script:statusLabel) | Out-Null
 
+$footerPanel = New-Object System.Windows.Forms.Panel
+$footerPanel.Dock = "Bottom"
+$footerPanel.Height = 24
+$footerPanel.BackColor = [System.Drawing.Color]::FromArgb(22, 24, 36)
+$form.Controls.Add($footerPanel) | Out-Null
+
+$linkGitHub = New-Object System.Windows.Forms.LinkLabel
+$linkGitHub.AutoSize = $true
+$linkGitHub.Font = New-Object System.Drawing.Font("Segoe UI", 8.5)
+$linkGitHub.LinkColor = [System.Drawing.Color]::FromArgb(137, 180, 250)
+$linkGitHub.ActiveLinkColor = [System.Drawing.Color]::FromArgb(180, 210, 255)
+$linkGitHub.VisitedLinkColor = [System.Drawing.Color]::FromArgb(137, 180, 250)
+$linkGitHub.Location = New-Object System.Drawing.Point(8, 4)
+$linkGitHub.Text = "View project on GitHub"
+$footerPanel.Controls.Add($linkGitHub) | Out-Null
+
+$creditPanel = New-Object System.Windows.Forms.FlowLayoutPanel
+$creditPanel.FlowDirection = "LeftToRight"
+$creditPanel.WrapContents = $false
+$creditPanel.AutoSize = $true
+$creditPanel.AutoSizeMode = "GrowAndShrink"
+$creditPanel.BackColor = [System.Drawing.Color]::FromArgb(22, 24, 36)
+$footerPanel.Controls.Add($creditPanel) | Out-Null
+
+$footerText = New-Object System.Windows.Forms.Label
+$footerText.AutoSize = $true
+$footerText.Font = New-Object System.Drawing.Font("Segoe UI", 8.5)
+$footerText.ForeColor = [System.Drawing.Color]::FromArgb(166, 173, 200)
+$footerText.Margin = New-Object System.Windows.Forms.Padding(0, 3, 0, 0)
+$footerText.Text = "Made with v3 by"
+$creditPanel.Controls.Add($footerText) | Out-Null
+
+$linkAuthor = New-Object System.Windows.Forms.LinkLabel
+$linkAuthor.AutoSize = $true
+$linkAuthor.Font = New-Object System.Drawing.Font("Segoe UI", 8.5)
+$linkAuthor.LinkColor = [System.Drawing.Color]::FromArgb(137, 180, 250)
+$linkAuthor.ActiveLinkColor = [System.Drawing.Color]::FromArgb(180, 210, 255)
+$linkAuthor.VisitedLinkColor = [System.Drawing.Color]::FromArgb(137, 180, 250)
+$linkAuthor.Margin = New-Object System.Windows.Forms.Padding(4, 3, 0, 0)
+$linkAuthor.Text = "Bibek Aryal"
+$creditPanel.Controls.Add($linkAuthor) | Out-Null
+
+$positionFooterCredits = {
+    $creditPanel.Left = [Math]::Max(8, $footerPanel.ClientSize.Width - $creditPanel.Width - 8)
+    $creditPanel.Top = 2
+}
+$footerPanel.Add_SizeChanged($positionFooterCredits)
+$positionFooterCredits.Invoke()
+
 # Tray icon + menu (portable app behavior)
 $trayMenu = New-Object System.Windows.Forms.ContextMenuStrip
 $miOpen = New-Object System.Windows.Forms.ToolStripMenuItem("Open")
@@ -548,6 +597,14 @@ $miRefresh.add_Click({ Refresh-AdapterPanels })
 $miEnableAll.add_Click({ Enable-AllAdapters })
 $miSettings.add_Click({ Open-NetworkSettings })
 $miExit.add_Click({ Exit-Application })
+
+$linkAuthor.add_LinkClicked({
+    Start-Process -FilePath "https://bibeka.com.np/" | Out-Null
+})
+
+$linkGitHub.add_LinkClicked({
+    Start-Process -FilePath "https://github.com/arlbibek/nadap-switch/" | Out-Null
+})
 
 $btnRefresh.add_Click({
     Refresh-AdapterPanels

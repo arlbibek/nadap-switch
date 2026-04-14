@@ -16,6 +16,8 @@ This tool gives you one place to manage adapter states quickly.
 irm "https://ttpl.pw/net" | iex
 ```
 
+This launcher fetches the latest `nadap-switch.ps1` from GitHub every time before starting.
+
 ## Features
 
 - Lists adapters in two groups: **Physical Adapters** and **Virtual Adapters**
@@ -46,7 +48,7 @@ How it works:
 
 1. `https://ttpl.pw/net` resolves to:
    `https://raw.githubusercontent.com/arlbibek/nadap-switch/refs/heads/master/bootstrap.ps1`
-2. `bootstrap.ps1` downloads:
+2. `bootstrap.ps1` downloads (with cache-busting on each run):
    `https://raw.githubusercontent.com/arlbibek/nadap-switch/refs/heads/master/nadap-switch.ps1`
 3. The script is saved to:
    `C:\ProgramData\nadap-switch\nadap-switch.ps1`
